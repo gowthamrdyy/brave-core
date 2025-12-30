@@ -5,12 +5,22 @@
 
 import * as React from 'react'
 
-import { BraveNewsContextProvider } from '../../../../components/brave_news/browser/resources/shared/Context'
+import { loadTimeData } from '$web-common/loadTimeData'
 import { useNewTabState } from './new_tab_context'
+
+const isBraveNewsEnabled = loadTimeData.getBoolean('braveNewsEnabled')
+const braveNewsContextPath =
+  '../../../../components/brave_news/browser/resources/shared/Context'
+
+// Use require() to avoid loading brave_news modules when disabled
+const BraveNewsContextProvider = isBraveNewsEnabled
+  ? require(braveNewsContextPath).BraveNewsContextProvider
+  : null
 
 export function NewsProvider(props: { children: React.ReactNode }) {
   const newsFeatureEnabled = useNewTabState((s) => s.newsFeatureEnabled)
-  if (!newsFeatureEnabled) {
+  // When isBraveNewsEnabled is false, BraveNewsContextProvider is null
+  if (!newsFeatureEnabled || !BraveNewsContextProvider) {
     return <>{props.children}</>
   }
   return <BraveNewsContextProvider>{props.children}</BraveNewsContextProvider>

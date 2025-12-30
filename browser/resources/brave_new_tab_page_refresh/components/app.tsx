@@ -6,6 +6,7 @@
 import * as React from 'react'
 import Icon from '@brave/leo/react/icon'
 
+import { loadTimeData } from '$web-common/loadTimeData'
 import { SearchBox } from './search/search_box'
 import { Background } from './background/background'
 import { BackgroundClickRegion } from './background/background_click_region'
@@ -13,12 +14,22 @@ import { BackgroundCaption } from './background/background_caption'
 import { SettingsModal, SettingsView } from './settings/settings_modal'
 import { TopSites } from './top_sites/top_sites'
 import { Clock } from './common/clock'
-import { LazyNewsFeed } from './news/lazy_news_feed'
 import { WidgetStack } from './widgets/widget_stack'
 import { useSearchLayoutReady, useWidgetLayoutReady } from './app_layout_ready'
 import useMediaQuery from '$web-common/useMediaQuery'
 
 import { style, threeColumnBreakpoint } from './app.style'
+
+const isBraveNewsEnabled = loadTimeData.getBoolean('braveNewsEnabled')
+
+// Lazy load LazyNewsFeed to avoid loading brave_news modules when disabled
+const LazyNewsFeed = isBraveNewsEnabled
+  ? React.lazy(() =>
+      import('./news/lazy_news_feed').then((m) => ({
+        default: m.LazyNewsFeed,
+      })),
+    )
+  : () => null
 
 const threeColumnQuery = `(width > ${threeColumnBreakpoint})`
 
@@ -107,7 +118,9 @@ export function App() {
         </div>
       </main>
       <div className='news-container'>
-        <LazyNewsFeed />
+        <React.Suspense fallback={null}>
+          <LazyNewsFeed />
+        </React.Suspense>
       </div>
       <SettingsModal
         isOpen={settingsView !== null}

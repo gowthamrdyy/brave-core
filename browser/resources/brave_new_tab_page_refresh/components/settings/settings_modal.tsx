@@ -9,8 +9,7 @@ import Icon from '@brave/leo/react/icon'
 import Navigation from '@brave/leo/react/navigation'
 import NavigationItem from '@brave/leo/react/navigationItem'
 
-import { useBraveNews } from '../../../../../components/brave_news/browser/resources/shared/Context'
-
+import { loadTimeData } from '$web-common/loadTimeData'
 import { useNewTabState } from '../../context/new_tab_context'
 import { useSearchState } from '../../context/search_context'
 import { BackgroundPanel } from './background_panel'
@@ -21,6 +20,10 @@ import { WidgetsPanel } from './widgets_panel'
 import { getString } from '../../lib/strings'
 
 import { style } from './settings_modal.style'
+
+const isBraveNewsEnabled = loadTimeData.getBoolean('braveNewsEnabled')
+const braveNewsContextPath =
+  '../../../../../components/brave_news/browser/resources/shared/Context'
 
 export type SettingsView =
   | 'background'
@@ -37,7 +40,10 @@ interface Props {
 }
 
 export function SettingsModal(props: Props) {
-  const braveNews = useBraveNews()
+  // Use require() to avoid loading brave_news modules when disabled
+  const braveNews = isBraveNewsEnabled
+    ? require(braveNewsContextPath).useBraveNews()
+    : { setCustomizePage: () => {}, customizePage: null }
   const searchFeatureEnabled = useSearchState((s) => s.searchFeatureEnabled)
   const newsFeatureEnabled = useNewTabState((s) => s.newsFeatureEnabled)
 

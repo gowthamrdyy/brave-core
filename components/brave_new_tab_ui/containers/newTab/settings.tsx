@@ -16,14 +16,14 @@ import NavigationItem from '@brave/leo/react/navigationItem'
 import NavigationMenu from '@brave/leo/react/navigationMenu'
 
 import { getLocale } from '$web-common/locale'
-import { useBraveNews } from '../../../brave_news/browser/resources/shared/Context'
 import { loadTimeData } from '$web-common/loadTimeData'
 import Dialog from '@brave/leo/react/dialog'
 
 import styled from 'styled-components'
 
 // Tabs
-const BackgroundImageSettings = React.lazy(() => import('./settings/backgroundImage'))
+const BackgroundImageSettings =
+  React.lazy(() => import('./settings/backgroundImage'))
 const BraveStatsSettings = React.lazy(() => import('./settings/braveStats'))
 const TopSitesSettings = React.lazy(() => import('./settings/topSites'))
 const ClockSettings = React.lazy(() => import('./settings/clock'))
@@ -101,7 +101,7 @@ const tabIcons: TabMap<string> = {
 
 const tabTranslationKeys: TabMap<string> = {
   [TabType.BackgroundImage]: 'backgroundImageTitle',
-  [TabType.BraveNews]: S.BRAVE_NEWS_SETTINGS_TITLE,
+  [TabType.BraveNews]: 'braveNewsTitle',
   [TabType.BraveStats]: 'statsTitle',
   [TabType.Clock]: 'clockTitle',
   [TabType.TopSites]: 'topSitesTitle',
@@ -109,34 +109,55 @@ const tabTranslationKeys: TabMap<string> = {
   [TabType.Search]: 'searchTitle'
 }
 
-const featureFlagSearchWidget = loadTimeData.getBoolean('featureFlagSearchWidget')
+const featureFlagSearchWidget =
+  loadTimeData.getBoolean('featureFlagSearchWidget')
+const isBraveNewsEnabled = loadTimeData.getBoolean('braveNewsEnabled')
+
 export default function Settings(props: Props) {
   const allowedTabTypes = React.useMemo(() => tabTypes.filter(t =>
     (props.allowBackgroundCustomization || t !== TabType.BackgroundImage) &&
     (featureFlagSearchWidget || t !== TabType.Search) &&
-    (!props.newTabData.isBraveNewsDisabledByPolicy ||
+    (isBraveNewsEnabled || t !== TabType.BraveNews) &&
+    (!isBraveNewsEnabled || !props.newTabData.isBraveNewsDisabledByPolicy ||
       t !== TabType.BraveNews)
   ), [
     props.allowBackgroundCustomization,
     props.newTabData.isBraveNewsDisabledByPolicy
   ])
-  const [activeTab, setActiveTab] = React.useState(props.allowBackgroundCustomization
-    ? TabType.BackgroundImage
-    : TabType.BraveStats)
-  const { customizePage, setCustomizePage } = useBraveNews()
+  const [activeTab, setActiveTab] = React.useState(
+    props.allowBackgroundCustomization
+      ? TabType.BackgroundImage
+      : TabType.BraveStats
+  )
+
+  // Only use useBraveNews hook when the feature is enabled
+  // Use require() to avoid loading brave_news modules when disabled
+  const braveNewsContext = isBraveNewsEnabled
+    ? require(
+        '../../../brave_news/browser/resources/shared/Context'
+      ).useBraveNews()
+    : null
+  const customizePage = braveNewsContext?.customizePage
+  const setCustomizePage = braveNewsContext?.setCustomizePage
+
+  let backdropCloses = true
+  if (isBraveNewsEnabled && customizePage) {
+    backdropCloses = false
+  }
 
   const changeTab = React.useCallback((tab: TabType) => {
-    if (tab === TabType.BraveNews) {
+    if (isBraveNewsEnabled && tab === TabType.BraveNews && setCustomizePage) {
       setCustomizePage('news')
       return
     }
 
     setActiveTab(tab)
-  }, [])
+  }, [setCustomizePage])
 
   // When the outside world tells us to update the active tab, do so.
   React.useEffect(() => {
-    if (!props.setActiveTab || !allowedTabTypes.includes(props.setActiveTab)) return
+    if (!props.setActiveTab ||
+        !allowedTabTypes.includes(props.setActiveTab)) return
     changeTab(props.setActiveTab)
   }, [props.setActiveTab])
 
@@ -144,7 +165,7 @@ export default function Settings(props: Props) {
     isOpen={props.showSettingsMenu}
     showClose
     onClose={() => { props.onClose?.() }}
-    backdropClickCloses={!customizePage}
+    backdropClickCloses={backdropCloses}
   >
     <SettingsTitle slot='title'>
       {getLocale('dashboardSettingsTitle')}
@@ -164,7 +185,7 @@ export default function Settings(props: Props) {
         </NavigationMenu>
       </Sidebar>
       <SettingsFeatureBody id='content'>
-        {/* Empty loading fallback is ok here since we are loading from local disk. */}
+        {/* Empty loading fallback since we are loading from local disk. */}
         <React.Suspense fallback={(<div />)}>
           {activeTab === TabType.BackgroundImage && <BackgroundImageSettings
             newTabData={props.newTabData}

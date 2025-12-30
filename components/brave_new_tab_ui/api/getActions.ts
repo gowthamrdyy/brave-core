@@ -14,8 +14,8 @@ import { NewTabActions } from '../constants/new_tab_types'
 import store from '../store'
 
 /**
- * Cache action creators. Deprecated. Use actions individually and dispatch provided
- * by redux store.
+ * Cache action creators. Deprecated. Use actions individually and dispatch
+ * provided by redux store.
  */
 let actions: NewTabActions
 export default function getActions () {
@@ -27,7 +27,13 @@ export default function getActions () {
 }
 
 export function getActionsForDispatch (dispatch: Dispatch) {
-  const allActions = Object.assign({}, newTabActions, stackWidgetActions, gridSitesActions, rewardsActions)
+  const allActions = Object.assign(
+    {},
+    newTabActions,
+    stackWidgetActions,
+    gridSitesActions,
+    rewardsActions
+  )
   return {
     ...bindActionCreators(allActions, dispatch),
     today: bindActionCreators(todayActions, dispatch),

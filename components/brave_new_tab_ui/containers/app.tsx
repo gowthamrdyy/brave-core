@@ -14,7 +14,6 @@ import NewTabPage from './newTab'
 
 // Utils
 import * as PreferencesAPI from '../api/preferences'
-import getBraveNewsController from '../../brave_news/browser/resources/shared/api'
 import getNTPBrowserAPI from '../api/background'
 import { getActionsForDispatch } from '../api/getActions'
 
@@ -28,16 +27,13 @@ interface Props {
   actions: NewTabActions
   newTabData: NewTab.State
   gridSitesData: NewTab.GridSitesState
-  braveNewsData: BraveNewsState,
+  braveNewsData: BraveNewsState
   braveVPNData: BraveVPNState
 }
 
-const getBraveNewsDisplayAd = function GetBraveNewsDisplayAd () {
-  return getBraveNewsController().getDisplayAd()
-}
-
 function DefaultPage (props: Props) {
-  const { newTabData, braveNewsData, braveVPNData, gridSitesData, actions } = props
+  const { newTabData, braveVPNData, gridSitesData, actions, braveNewsData }
+    = props
 
   // don't render if user prefers an empty page
   if (props.newTabData.showEmptyPage && !props.newTabData.isIncognito) {
@@ -56,12 +52,21 @@ function DefaultPage (props: Props) {
       saveShowBraveTalk={PreferencesAPI.saveShowBraveTalk}
       saveBrandedWallpaperOptIn={PreferencesAPI.saveBrandedWallpaperOptIn}
       saveSetAllStackWidgets={PreferencesAPI.saveSetAllStackWidgets}
-      getBraveNewsDisplayAd={getBraveNewsDisplayAd}
-      chooseNewCustomBackgroundImage={() => getNTPBrowserAPI().pageHandler.chooseLocalCustomBackground() }
-      setCustomImageBackground={background => getNTPBrowserAPI().pageHandler.useCustomImageBackground(background) }
-      removeCustomImageBackground={background => getNTPBrowserAPI().pageHandler.removeCustomImageBackground(background) }
-      setBraveBackground={selectedBackground => getNTPBrowserAPI().pageHandler.useBraveBackground(selectedBackground)}
-      setColorBackground={(color, useRandomColor) => getNTPBrowserAPI().pageHandler.useColorBackground(color, useRandomColor) }
+      chooseNewCustomBackgroundImage={() => {
+        getNTPBrowserAPI().pageHandler.chooseLocalCustomBackground()
+      }}
+      setCustomImageBackground={background => {
+        getNTPBrowserAPI().pageHandler.useCustomImageBackground(background)
+      }}
+      removeCustomImageBackground={background => {
+        getNTPBrowserAPI().pageHandler.removeCustomImageBackground(background)
+      }}
+      setBraveBackground={selectedBackground => {
+        getNTPBrowserAPI().pageHandler.useBraveBackground(selectedBackground)
+      }}
+      setColorBackground={(color, useRandomColor) => {
+        getNTPBrowserAPI().pageHandler.useColorBackground(color, useRandomColor)
+      }}
     />
   )
 }

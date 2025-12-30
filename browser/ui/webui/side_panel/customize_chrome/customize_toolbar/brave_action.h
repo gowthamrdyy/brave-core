@@ -9,7 +9,7 @@
 #include "base/containers/fixed_flat_map.h"
 #include "brave/components/ai_chat/core/common/buildflags/buildflags.h"
 #include "brave/components/ai_chat/core/common/pref_names.h"
-#include "brave/components/brave_news/common/pref_names.h"
+#include "brave/components/brave_news/common/buildflags/buildflags.h"
 #include "brave/components/brave_rewards/core/pref_names.h"
 #include "brave/components/brave_vpn/common/buildflags/buildflags.h"
 #include "brave/components/brave_wallet/common/buildflags/buildflags.h"
@@ -19,13 +19,17 @@
 #include "components/grit/brave_components_strings.h"
 #include "ui/gfx/vector_icon_types.h"
 
+#if BUILDFLAG(ENABLE_BRAVE_NEWS)
+#include "brave/components/brave_news/common/pref_names.h"
+#endif
+
 #if BUILDFLAG(ENABLE_BRAVE_VPN)
 #include "brave/components/brave_vpn/common/pref_names.h"
-#endif  // BUILDFLAG(ENABLE_BRAVE_VPN)
+#endif
 
 #if BUILDFLAG(ENABLE_BRAVE_WALLET)
 #include "brave/components/brave_wallet/browser/pref_names.h"
-#endif  // BUILDFLAG(ENABLE_BRAVE_WALLET)
+#endif
 
 namespace customize_chrome {
 
@@ -98,6 +102,7 @@ inline constexpr BraveAction kShowReward = {
     .pref_name = brave_rewards::prefs::kShowLocationBarButton,
     .icon = kLeoProductBatOutlineIcon};
 
+#if BUILDFLAG(ENABLE_BRAVE_NEWS)
 inline constexpr BraveAction kShowBraveNews = {
     .id = side_panel::customize_chrome::mojom::ActionId::kShowBraveNews,
     .display_name_resource_id = IDS_CUSTOMIZE_TOOLBAR_TOGGLE_BRAVE_NEWS,
@@ -106,6 +111,7 @@ inline constexpr BraveAction kShowBraveNews = {
     .category = side_panel::customize_chrome::mojom::CategoryId::kAddressBar,
     .pref_name = brave_news::prefs::kShouldShowToolbarButton,
     .icon = kLeoRssIcon};
+#endif  // BUILDFLAG(ENABLE_BRAVE_NEWS)
 
 inline constexpr auto kBraveActions =
     base::MakeFixedFlatMap<side_panel::customize_chrome::mojom::ActionId,
@@ -114,15 +120,17 @@ inline constexpr auto kBraveActions =
         {kShowSidePanelAction.id, &kShowSidePanelAction},
 #if BUILDFLAG(ENABLE_BRAVE_WALLET)
         {kShowWalletAction.id, &kShowWalletAction},
-#endif  // BUILDFLAG(ENABLE_BRAVE_WALLET)
+#endif
 #if BUILDFLAG(ENABLE_AI_CHAT)
         {kShowAIChatAction.id, &kShowAIChatAction},
-#endif  // BUILDFLAG(ENABLE_AI_CHAT)
+#endif
 #if BUILDFLAG(ENABLE_BRAVE_VPN)
         {kShowVPNAction.id, &kShowVPNAction},
-#endif  // BUILDFLAG(ENABLE_BRAVE_VPN)
+#endif
         {kShowReward.id, &kShowReward},
+#if BUILDFLAG(ENABLE_BRAVE_NEWS)
         {kShowBraveNews.id, &kShowBraveNews},
+#endif
     });
 
 }  // namespace customize_chrome

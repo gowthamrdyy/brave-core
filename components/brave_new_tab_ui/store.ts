@@ -4,14 +4,21 @@
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
 // Redux API
-import { createStore, applyMiddleware } from 'redux'
+import { createStore, applyMiddleware, Middleware } from 'redux'
 
 // Feature core reducer
 import { mainNewTabReducer } from './reducers'
 import braveVPNAsyncHandler from './async/brave_vpn'
 import todayAsyncHandler from './async/today'
+import { loadTimeData } from '$web-common/loadTimeData'
+
+const isBraveNewsEnabled = loadTimeData.getBoolean('braveNewsEnabled')
+
+const middleware: Middleware[] = isBraveNewsEnabled
+  ? [todayAsyncHandler, braveVPNAsyncHandler]
+  : [braveVPNAsyncHandler]
 
 export default createStore(
   mainNewTabReducer,
-  applyMiddleware(todayAsyncHandler, braveVPNAsyncHandler)
+  applyMiddleware(...middleware)
 )

@@ -3,12 +3,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { useBraveNews } from '../../../../components/brave_news/browser/resources/shared/Context'
+import { loadTimeData } from '$web-common/loadTimeData'
 
 import { useNewTabState } from '../context/new_tab_context'
 import { useTopSitesState } from '../context/top_sites_context'
 import { useRewardsState } from '../context/rewards_context'
 import { useVpnState } from '../context/vpn_context'
+
+const isBraveNewsEnabled = loadTimeData.getBoolean('braveNewsEnabled')
+const braveNewsContextPath =
+  '../../../../components/brave_news/browser/resources/shared/Context'
 
 // Returns a value indicating whether the search component is ready for layout
 // based on application state initialization status.
@@ -32,8 +36,10 @@ export function useWidgetLayoutReady() {
 
 function useBraveNewsInitialized() {
   const newsFeatureEnabled = useNewTabState((s) => s.newsFeatureEnabled)
-  if (!newsFeatureEnabled) {
+  if (!newsFeatureEnabled || !isBraveNewsEnabled) {
     return true
   }
+  // Use require() to avoid loading brave_news modules when disabled
+  const { useBraveNews } = require(braveNewsContextPath)
   return useBraveNews().isShowOnNTPPrefEnabled !== undefined
 }

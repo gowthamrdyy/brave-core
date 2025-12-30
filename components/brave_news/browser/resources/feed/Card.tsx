@@ -126,7 +126,8 @@ export default styled.div`
 export const braveNewsCardClickHandler = (href: string | undefined, allowedSchemes: string[] = defaultAllowedSchemes) => (e: React.MouseEvent) => {
   validateScheme(href, allowedSchemes)
 
-  if (configurationCache.value.openArticlesInNewTab || e.ctrlKey || e.metaKey || e.buttons & 4) {
+  const openInNewTab = configurationCache.get().value.openArticlesInNewTab
+  if (openInNewTab || e.ctrlKey || e.metaKey || e.buttons & 4) {
     window.open(href, '_blank', 'noopener noreferrer')
   } else {
     window.location.href = href!

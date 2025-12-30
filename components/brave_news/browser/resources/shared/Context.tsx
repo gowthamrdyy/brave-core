@@ -79,13 +79,37 @@ export const BraveNewsContext = React.createContext<BraveNewsContext>({
   shouldRenderImages: false,
 })
 
-export const publishersCache = new PublishersCachingWrapper()
-const channelsCache = new ChannelsCachingWrapper()
-export const configurationCache = new ConfigurationCachingWrapper()
+// Lazy-initialize caches to avoid calling getBraveNewsController() at module
+// load time, which fails when ENABLE_BRAVE_NEWS is false.
+let _publishersCache: PublishersCachingWrapper | null = null
+let _channelsCache: ChannelsCachingWrapper | null = null
+let _configurationCache: ConfigurationCachingWrapper | null = null
+
+function getPublishersCache(): PublishersCachingWrapper {
+  if (!_publishersCache) _publishersCache = new PublishersCachingWrapper()
+  return _publishersCache
+}
+
+function getChannelsCache(): ChannelsCachingWrapper {
+  if (!_channelsCache) _channelsCache = new ChannelsCachingWrapper()
+  return _channelsCache
+}
+
+function getConfigurationCache(): ConfigurationCachingWrapper {
+  if (!_configurationCache) {
+    _configurationCache = new ConfigurationCachingWrapper()
+  }
+  return _configurationCache
+}
+
+// Exported for external use
+export const publishersCache = { get: getPublishersCache }
+export const configurationCache = { get: getConfigurationCache }
 
 export function BraveNewsContextProvider(props: { children: React.ReactNode }) {
   const [locale, setLocale] = useState('')
-  const [configuration, setConfiguration] = useState<Configuration>(configurationCache.value)
+  const [configuration, setConfiguration] = useState<Configuration>(
+    getConfigurationCache().value)
 
   // Note: It's okay to fetch the FeedV2 even when the feature isn't enabled
   // because the controller will just return an empty feed.
@@ -109,14 +133,15 @@ export function BraveNewsContextProvider(props: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const handler = (channels: Channels) => setChannels(channels)
-
-    channelsCache.addListener(handler)
-    return () => channelsCache.removeListener(handler)
+    const cache = getChannelsCache()
+    cache.addListener(handler)
+    return () => cache.removeListener(handler)
   }, [])
 
   React.useEffect(() => {
-    configurationCache.addListener(setConfiguration)
-    return () => configurationCache.removeListener(setConfiguration)
+    const cache = getConfigurationCache()
+    cache.addListener(setConfiguration)
+    return () => cache.removeListener(setConfiguration)
   }, [])
 
   const updateSuggestedPublisherIds = useCallback(async () => {
@@ -127,8 +152,9 @@ export function BraveNewsContextProvider(props: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const handler = (publishers: Publishers) => setPublishers(publishers)
-    publishersCache.addListener(handler)
-    return () => { publishersCache.removeListener(handler) }
+    const cache = getPublishersCache()
+    cache.addListener(handler)
+    return () => { cache.removeListener(handler) }
   }, [])
 
   React.useEffect(() => {
@@ -155,14 +181,14 @@ export function BraveNewsContextProvider(props: { children: React.ReactNode }) {
 
   const toggleBraveNewsOnNTP = (shouldEnable: boolean) => {
     if (shouldEnable) {
-      configurationCache.set({ isOptedIn: true, showOnNTP: true })
+      getConfigurationCache().set({ isOptedIn: true, showOnNTP: true })
       return
     }
-    configurationCache.set({ showOnNTP: false })
+    getConfigurationCache().set({ showOnNTP: false })
   }
 
   const setOpenArticlesInNewTab = useCallback((inNewTab: boolean) => {
-    configurationCache.set({ openArticlesInNewTab: inNewTab })
+    getConfigurationCache().set({ openArticlesInNewTab: inNewTab })
   }, [])
 
   const reportViewCount = useCallback((newViews: number) => {
@@ -240,7 +266,7 @@ export const useChannelSubscribed = (channelName: string) => {
   const subscribed = useMemo(() => channels[channelName]?.subscribedLocales.includes(locale) ?? false,
     [channels[channelName], locale])
   const setSubscribed = React.useCallback((subscribed: boolean) => {
-    channelsCache.setChannelSubscribed(locale, channelName, subscribed)
+    getChannelsCache().setChannelSubscribed(locale, channelName, subscribed)
   }, [channelName, locale])
 
   return {
@@ -258,7 +284,11 @@ export const usePublisherFollowed = (publisherId: string) => {
   const publisher = usePublisher(publisherId)
 
   const followed = isPublisherEnabled(publisher)
-  const setFollowed = useCallback((followed: boolean) => publishersCache.setPublisherFollowed(publisherId, followed), [publisherId])
+  const setFollowed = useCallback(
+    (followed: boolean) =>
+      getPublishersCache().setPublisherFollowed(publisherId, followed),
+    [publisherId],
+  )
 
   return {
     followed,

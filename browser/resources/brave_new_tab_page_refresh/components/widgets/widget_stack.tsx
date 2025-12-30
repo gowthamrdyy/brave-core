@@ -6,7 +6,7 @@
 import * as React from 'react'
 import Icon from '@brave/leo/react/icon'
 
-import { useBraveNews } from '../../../../../components/brave_news/browser/resources/shared/Context'
+import { loadTimeData } from '$web-common/loadTimeData'
 import { useNewTabState } from '../../context/new_tab_context'
 import { useRewardsState } from '../../context/rewards_context'
 import { useVpnState } from '../../context/vpn_context'
@@ -15,9 +15,19 @@ import { RewardsWidget } from './rewards_widget'
 import { TalkWidget } from './talk_widget'
 import { VpnWidget } from './vpn_widget'
 import { StatsWidget } from './stats_widget'
-import { NewsWidget } from './news_widget'
 
 import { style } from './widget_stack.style'
+
+const isBraveNewsEnabled = loadTimeData.getBoolean('braveNewsEnabled')
+const braveNewsContextPath =
+  '../../../../../components/brave_news/browser/resources/shared/Context'
+
+// Lazy load NewsWidget to avoid loading brave_news modules when disabled
+const NewsWidget = isBraveNewsEnabled
+  ? React.lazy(() =>
+      import('./news_widget').then((m) => ({ default: m.NewsWidget })),
+    )
+  : () => null
 
 type TabName = 'rewards' | 'talk' | 'vpn' | 'stats' | 'news'
 
@@ -34,7 +44,10 @@ export function WidgetStack(props: Props) {
   const rewardsFeatureEnabled = useRewardsState((s) => s.rewardsFeatureEnabled)
   const vpnFeatureEnabled = useVpnState((s) => s.vpnFeatureEnabled)
   const showVpnWidget = useVpnState((s) => s.showVpnWidget)
-  const showNews = useBraveNews().isShowOnNTPPrefEnabled
+  // Use require() to avoid loading brave_news modules when disabled
+  const showNews = isBraveNewsEnabled
+    ? require(braveNewsContextPath).useBraveNews().isShowOnNTPPrefEnabled
+    : false
   const newsFeatureEnabled = useNewTabState((s) => s.newsFeatureEnabled)
 
   const [currentTab, setCurrentTab] = React.useState(loadCurrentTab(props.name))
@@ -108,7 +121,11 @@ export function WidgetStack(props: Props) {
       case 'stats':
         return <StatsWidget />
       case 'news':
-        return <NewsWidget />
+        return (
+          <React.Suspense fallback={null}>
+            <NewsWidget />
+          </React.Suspense>
+        )
     }
   }
 
