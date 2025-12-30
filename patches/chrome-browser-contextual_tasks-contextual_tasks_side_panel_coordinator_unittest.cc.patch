@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/contextual_tasks/contextual_tasks_side_panel_coordinator_unittest.cc b/chrome/browser/contextual_tasks/contextual_tasks_side_panel_coordinator_unittest.cc
-index 8f4d1493fea8d65e0e37f351e4184af2d868adf1..edf550912c94d0ac12c8d386e0e493c46e341a03 100644
+index 6d09d36f19ee6a5985f13b583559fa6fc8b11ffa..f02770f33d4d19f42d078e6c0a94d488267cbec6 100644
 --- a/chrome/browser/contextual_tasks/contextual_tasks_side_panel_coordinator_unittest.cc
 +++ b/chrome/browser/contextual_tasks/contextual_tasks_side_panel_coordinator_unittest.cc
-@@ -109,6 +109,7 @@ class MockSidePanelUI : public SidePanelUI {
+@@ -111,6 +111,7 @@ class MockSidePanelUI : public SidePanelUI {
                SetNoDelaysForTesting,
                (bool no_delays_for_testing),
                (override));
